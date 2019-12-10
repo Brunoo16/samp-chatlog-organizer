@@ -52,12 +52,20 @@ static void Thread()
 
 						break;
 					}
-					case 0x0: // 0.3.7-R3
+					case 0x0: // 0.3.7-R3 and 0.3.7-R4
 					{
-						VirtualProtect(reinterpret_cast<void*>(samp + 0xC5062 + 0x1), 4, PAGE_EXECUTE_READWRITE, &OldProtect);
+						if (*reinterpret_cast<BYTE*>(samp + 0xE596C) != 0x7B) // This works for now, meh...
+						{
+							VirtualProtect(reinterpret_cast<void*>(samp + 0xC5062 + 0x1), 4, PAGE_EXECUTE_READWRITE, &OldProtect);
 
-						*reinterpret_cast<DWORD*>(samp + 0xC5062 + 0x1) = reinterpret_cast<DWORD>(&file_name_and_path);
+							*reinterpret_cast<DWORD*>(samp + 0xC5062 + 0x1) = reinterpret_cast<DWORD>(&file_name_and_path);
+						}
+						else
+						{
+							VirtualProtect(reinterpret_cast<void*>(samp + 0xC47F2 + 0x1), 4, PAGE_EXECUTE_READWRITE, &OldProtect);
 
+							*reinterpret_cast<DWORD*>(samp + 0xC47F2 + 0x1) = reinterpret_cast<DWORD>(&file_name_and_path);
+						}
 						break;
 					}
 					case 0x31: // 0.3.DL-R1
@@ -71,8 +79,6 @@ static void Thread()
 					default:
 					{
 						FreeLibraryAndExitThread(module, 0);
-
-						break;
 					}
 				}
 			}
