@@ -60,6 +60,12 @@ static void Thread()
 
 							*reinterpret_cast<DWORD*>(samp + 0xC5062 + 0x1) = reinterpret_cast<DWORD>(&file_name_and_path);
 						}
+						else if (*reinterpret_cast<BYTE*>(samp + 0xE5989) == 0x35) // 0.3.7-R5
+						{ 
+							VirtualProtect(reinterpret_cast<void*>(samp + 0xC47D2 + 0x1), 4, PAGE_EXECUTE_READWRITE, &OldProtect);
+							
+							*reinterpret_cast<DWORD*>(samp + 0xC47D2 + 0x1) = reinterpret_cast<DWORD>(&file_name_and_path);
+						}
 						else
 						{
 							VirtualProtect(reinterpret_cast<void*>(samp + 0xC47F2 + 0x1), 4, PAGE_EXECUTE_READWRITE, &OldProtect);
