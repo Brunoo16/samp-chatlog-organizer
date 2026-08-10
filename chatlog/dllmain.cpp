@@ -1,9 +1,14 @@
 #include "dllmain.h"
+#include "debug.h"
 
 HMODULE module = NULL;
 
 static void Thread()
 {
+	#ifdef _DEBUG
+		CreateDebugConsole();
+	#endif
+
 	DWORD samp = reinterpret_cast<DWORD>(GetModuleHandleA("samp.dll"));
 
 	if (!samp)
@@ -12,6 +17,11 @@ static void Thread()
 	}
 	else
 	{
+		ServerInfo server = GetServerInfo();
+		DEBUG_PRINT("Name: %s\n", server.name);
+		DEBUG_PRINT("IP: %s\n", server.ip);
+		DEBUG_PRINT("Port: %d\n", server.port);
+
 		static char file_name_and_path[MAX_PATH];
 
 		if (SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, file_name_and_path) == S_OK)
@@ -26,8 +36,20 @@ static void Thread()
 
 				struct tm* current_time = localtime(&now);
 
-				sprintf(file_name_and_path, "%s\\%d-%.2d-%.2d %.2d.%.2d.%.2d.txt", file_name_and_path, current_time->tm_year + 1900, current_time->tm_mon + 1, current_time->tm_mday, current_time->tm_hour, current_time->tm_min, current_time->tm_sec);
-
+				sprintf(
+					file_name_and_path,
+					"%s\\%d-%.2d-%.2d %.2d.%.2d.%.2d [%s-%d].txt",
+					file_name_and_path,
+					current_time->tm_year + 1900,
+					current_time->tm_mon + 1,
+					current_time->tm_mday,
+					current_time->tm_hour,
+					current_time->tm_min,
+					current_time->tm_sec,
+					server.ip,
+					server.port
+				);
+				
 				switch (*reinterpret_cast<BYTE*>(samp + 0x129)) // Client Version
 				{
 					case 0xF4: // 0.3.7-R1
@@ -101,4 +123,47 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 		return CreateThread(0, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(Thread), 0, 0, 0) > 0;
 	}
 	return 1;
+}
+
+static ServerInfo GetServerInfo()
+{
+	ServerInfo info{};
+
+	const char* cmd = GetCommandLineA();
+
+	const char* p = cmd;
+
+	while (*p)
+	{
+		if (p[0] == '-' && p[1] == 'n' && p[2] == ' ')
+		{
+			sscanf_s(
+				p + 3,
+				"%63s",
+				info.name,
+				(unsigned)_countof(info.name)
+			);
+		}
+		else if (p[0] == '-' && p[1] == 'h' && p[2] == ' ')
+		{
+			sscanf_s(
+				p + 3,
+				"%63s",
+				info.ip,
+				(unsigned)_countof(info.ip)
+			);
+		}
+		else if (p[0] == '-' && p[1] == 'p' && p[2] == ' ')
+		{
+			sscanf_s(
+				p + 3,
+				"%d",
+				&info.port
+			);
+		}
+
+		++p;
+	}
+
+	return info;
 }
